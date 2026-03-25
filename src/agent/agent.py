@@ -9,6 +9,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 from src.agent.prompts import get_prompt_manager
+from src.agent.tool.tool_management import ToolManagement
 from src.config import settings
 from src.logging_config import get_logger
 
@@ -36,6 +37,7 @@ class DevMateAgent:
 
         self._setup_langsmith()
         self.llm = self._init_llm()
+        self.tool_manager = ToolManagement()
         self.agent = None
         self._initialized = False
         self._initialized_base = True
@@ -69,14 +71,31 @@ class DevMateAgent:
         os.environ["OPENAI_BASE_URL"] = settings.model.ai_base_url
         logger.info(f"OpenAI 环境变量已配置: {settings.model.ai_base_url}")
 
+    async def initialize(self) -> None:
+        """异步初始化 Agent，连接 MCP 并创建 agent 实例."""
+        async with self._lock:
+            if self._initialized:
+                return
+
+            await self.tool_manager.initialize()
+            await self._init_agent()
+            self._initialized = True
+            logger.info("DevMateAgent 初始化完成")
+
 
     async def _init_agent(self) -> None:
         """初始化 Agent 实例."""
         try:
-            self.agent = create_agent(
-                model=self.llm,
-                system_prompt=self._build_system_prompt(),
-            )
+            tools = self.tool_manager.tools
+            if tools:
+                self.agent = create_agent(
+                    model=self.llm,
+                    tools=tools,
+                    system_prompt=self._build_system_prompt(),
+                )
+                logger.info(f"Agent 创建成功，共加载 {len(tools)} 个工具")
+            else:
+                logger.warning("没有可用的工具")
         except Exception as e:
             logger.error(f"Agent 初始化失败: {e}", exc_info=True)
             raise
@@ -145,6 +164,15 @@ class DevMateAgent:
         except Exception as e:
             logger.error(f"Agent 流式调用失败: {e}", exc_info=True)
             yield f"抱歉，遇到了错误：{str(e)}"
+
+    async def close(self) -> None:
+        """关闭 Agent，清理资源."""
+        logger.info("正在关闭 DevMateAgent...")
+        try:
+            await self.tool_manager.disconnect_mcp()
+        except Exception as e:
+            logger.error(f"关闭 MCP 连接时出错: {e}", exc_info=True)
+        logger.info("DevMateAgent 已关闭")
 
 
 
