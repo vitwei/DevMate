@@ -9,6 +9,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 from src.agent.prompts import get_prompt_manager
+from src.agent.tool.skills_tools import SkillMiddleware
 from src.agent.tool.tool_management import ToolManagement
 from src.config import settings
 from src.logging_config import get_logger
@@ -92,6 +93,7 @@ class DevMateAgent:
                     model=self.llm,
                     tools=tools,
                     system_prompt=self._build_system_prompt(),
+                    middleware=[SkillMiddleware()],
                 )
                 logger.info(f"Agent 创建成功，共加载 {len(tools)} 个工具")
             else:
