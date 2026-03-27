@@ -32,6 +32,7 @@ class ToolManagement:
         """
         self._tools: list[BaseTool] = []
         self._lock = asyncio.Lock()
+        self._reconnect_lock = asyncio.Lock()
         self._mcp_tools: list[BaseTool] = []
         self._rag_tools: list[BaseTool] = []
         self._file_tools: list[BaseTool] = []
@@ -44,6 +45,8 @@ class ToolManagement:
                 "url": "http://localhost:8000/mcp",
             }
         }
+        self._last_reconnect_attempt = 0.0
+        self._reconnect_cooldown = 5.0
 
     async def initialize(self) -> None:
         """初始化工具管理器，加载所有工具（包括尝试连接MCP）."""
@@ -68,6 +71,28 @@ class ToolManagement:
                 logger.warning("MCP 连接失败，将使用其他工具")
         except Exception as e:
             logger.error(f"尝试连接 MCP 时出错: {e}", exc_info=True)
+
+    async def _check_and_reconnect_mcp(self) -> None:
+        """检查 MCP 连接状态，如果不可用则尝试重连（带冷却时间）."""
+        import time
+        
+        if self._mcp_available:
+            return
+        
+        current_time = time.time()
+        if current_time - self._last_reconnect_attempt < self._reconnect_cooldown:
+            return
+        
+        async with self._reconnect_lock:
+            if self._mcp_available:
+                return
+            
+            if current_time - self._last_reconnect_attempt < self._reconnect_cooldown:
+                return
+            
+            self._last_reconnect_attempt = time.time()
+            logger.info("MCP 当前不可用，尝试重新连接...")
+            await self._try_connect_mcp()
 
     def _load_rag_tools(self) -> None:
         """加载RAG工具."""
@@ -158,9 +183,18 @@ class ToolManagement:
         self._tools.extend(self._rag_tools)
         self._tools.extend(self._file_tools)
 
+    async def get_tools(self) -> list[BaseTool]:
+        """异步获取所有工具，会尝试自动重连 MCP.
+
+        Returns:
+            工具列表
+        """
+        await self._check_and_reconnect_mcp()
+        return self._tools.copy()
+
     @property
     def tools(self) -> list[BaseTool]:
-        """获取所有工具.
+        """获取所有工具（同步版本，不会触发重连）.
 
         Returns:
             工具列表

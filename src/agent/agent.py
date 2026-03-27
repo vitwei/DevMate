@@ -42,6 +42,7 @@ class DevMateAgent:
         self.agent = None
         self._initialized = False
         self._initialized_base = True
+        self._last_tool_count = 0
 
     def _init_llm(self) -> ChatOpenAI:
         """初始化 LLM 模型.
@@ -95,6 +96,7 @@ class DevMateAgent:
                     system_prompt=self._build_system_prompt(),
                     middleware=[SkillMiddleware()],
                 )
+                self._last_tool_count = len(tools)
                 logger.info(f"Agent 创建成功，共加载 {len(tools)} 个工具")
             else:
                 logger.warning("没有可用的工具")
@@ -134,6 +136,8 @@ class DevMateAgent:
             chat_history = []
 
         try:
+            await self._refresh_agent_tools()
+            
             enhanced_input = input_text
             messages = []
 
@@ -166,6 +170,15 @@ class DevMateAgent:
         except Exception as e:
             logger.error(f"Agent 流式调用失败: {e}", exc_info=True)
             yield f"抱歉，遇到了错误：{str(e)}"
+
+    async def _refresh_agent_tools(self) -> None:
+        """刷新 Agent 的工具列表（包括尝试重连 MCP）."""
+        tools = await self.tool_manager.get_tools()
+        current_tool_count = len(tools)
+        
+        if self.agent is None or current_tool_count != self._last_tool_count:
+            await self._init_agent()
+            logger.info(f"Agent 工具已刷新，共 {current_tool_count} 个工具")
 
     async def close(self) -> None:
         """关闭 Agent，清理资源."""
