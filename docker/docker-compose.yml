@@ -1,0 +1,55 @@
+services:
+  mcp-server:
+    container_name: devmate-mcp-server
+    image: devmate-app:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ..:/app
+      - /app/.venv
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    command: ["uv", "run", "python", "-m", "src.mcp_server.server"]
+
+  devmate-app:
+    container_name: devmate-app
+    image: devmate-app:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - mcp-server
+    volumes:
+      - ..:/app
+      - /app/.venv
+      - ../workspace:/app/workspace
+      - ../.knowledge:/app/.knowledge
+      - ../generated_projects:/app/generated_projects
+    env_file:
+      - ../.env
+    stdin_open: true
+    tty: true
+    command: ["uv", "run", "devmate", "chat"]
+
+  devmate-web:
+    container_name: devmate-web
+    image: devmate-app:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - mcp-server
+    volumes:
+      - ..:/app
+      - /app/.venv
+      - ../workspace:/app/workspace
+      - ../.knowledge:/app/.knowledge
+      - ../generated_projects:/app/generated_projects
+    env_file:
+      - ../.env
+    ports:
+      - "5003:5003"
+    command: ["uv", "run", "devmate", "serve"]
