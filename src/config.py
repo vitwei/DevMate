@@ -64,6 +64,7 @@ class RAGConfig:
     kb_dir: str = ".knowledge/docs"
     embedding_base_url: str = ""
     embedding_api_key: str = ""
+    score_threshold: float = 0.7
 
 
 @dataclass

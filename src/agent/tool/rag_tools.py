@@ -43,7 +43,7 @@ def _get_retriever() -> LocalRAGRetriever:
 
 
 @tool
-def search_knowledge_base(query: str, top_k: int = 3, score_threshold: float = 0.7) -> str:
+def search_knowledge_base(query: str) -> str:
     """查询本地知识库获取相关信息.
 
     当你需要查找项目规范、指南、最佳实践或其他已存储在本地知识库中的信息时，使用此工具。
@@ -57,6 +57,8 @@ def search_knowledge_base(query: str, top_k: int = 3, score_threshold: float = 0
         格式化的检索结果字符串
     """
     try:
+        top_k = settings.rag.top_k
+        score_threshold = settings.rag.score_threshold
         retriever = _get_retriever()
         results = retriever.search_knowledge_recall(
             query=query,
