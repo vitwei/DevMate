@@ -21,13 +21,10 @@ RUN apt-get clean && apt-get update --fix-missing && \
 
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml uv.lock ./
-
-RUN uv sync --frozen --no-dev
-
 COPY . .
 
+RUN uv sync --frozen
+
 RUN mkdir -p /app/workspace
-RUN mkdir -p /app/generated_projects
 
 CMD ["uv", "run", "devmate", "chat"]
