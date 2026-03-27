@@ -13,7 +13,7 @@ from src.logging_config import get_logger
 logger = get_logger(__name__)
 
 # 创建 MCP server 实例
-mcp = FastMCP("search_web")
+mcp = FastMCP("search_web", host="0.0.0.0")
 
 
 @mcp.tool()

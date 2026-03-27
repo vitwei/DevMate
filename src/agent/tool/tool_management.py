@@ -42,8 +42,8 @@ class ToolManagement:
         self._mcp_config = mcp_config or {
             "local-mcp": {
                 "transport": "streamable_http",
-                "url": "http://localhost:8000/mcp",
-            }
+                "url": "http://mcp-server:8000/mcp",
+            },
         }
         self._last_reconnect_attempt = 0.0
         self._reconnect_cooldown = 5.0
