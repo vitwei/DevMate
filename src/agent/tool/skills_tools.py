@@ -1,3 +1,8 @@
+"""Agent Skills 工具与中间件模块.
+
+提供 Skills 相关的工具和中间件，用于将 Skills 注入到 Agent 的提示词中。
+"""
+
 import logging
 from collections.abc import Callable
 
