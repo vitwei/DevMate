@@ -41,7 +41,7 @@ class LangSmithConfig:
 class SkillsConfig:
     """Agent Skills 配置."""
 
-    skills_dir: str = ".skills"
+    skills_dir: str = "skills"
 
 
 @dataclass
