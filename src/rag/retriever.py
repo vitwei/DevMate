@@ -63,7 +63,7 @@ class LocalRAGRetriever:
         )
 
     def search_knowledge_recall(
-        self, query: str, k: int = 4, score_threshold: float = 0.6
+        self, query: str, k: int = 30, score_threshold: float = 0.5
     ) -> list[dict]:
         """
         在本地知识库中执行相似度检索。
@@ -79,7 +79,6 @@ class LocalRAGRetriever:
             - chunk 索引
             - 具体内容
         """
-
         docs = self.vectorstore.similarity_search_with_score(query, k=k)
 
         results: list[dict] = []

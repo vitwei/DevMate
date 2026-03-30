@@ -51,7 +51,7 @@ def search_knowledge_base(query: str) -> str:
     Args:
         query: 用户的查询问题或关键词
         top_k: 返回的最相关结果数量，默认为 3
-        score_threshold: 相似度阈值（0-1），只有高于此阈值的结果才会返回，默认为 0.7
+        score_threshold: 相似度阈值（0-1），只有高于此阈值的结果才会返回，默认为 0.5
 
     Returns:
         格式化的检索结果字符串
