@@ -5,6 +5,8 @@ import os
 from collections.abc import AsyncGenerator
 from typing import Optional
 
+from deepagents import create_deep_agent
+from deepagents.backends import FilesystemBackend
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
@@ -40,6 +42,7 @@ class DevMateAgent:
         self.llm = self._init_llm()
         self.tool_manager = ToolManagement()
         self.agent = None
+        self.agent_type = "deepagents"
         self._initialized = False
         self._initialized_base = True
         self._last_tool_count = 0
@@ -73,6 +76,13 @@ class DevMateAgent:
         os.environ["OPENAI_BASE_URL"] = settings.model.ai_base_url
         logger.info(f"OpenAI 环境变量已配置: {settings.model.ai_base_url}")
 
+    async def _init_agent(self) -> None:
+        """根据 agent_type 选择初始化方法."""
+        if self.agent_type == "deepagents":
+            await self._init_deepagents_agent()
+        else:
+            await self._init_langchain_agent()
+
     async def initialize(self) -> None:
         """异步初始化 Agent，连接 MCP 并创建 agent 实例."""
         async with self._lock:
@@ -85,7 +95,7 @@ class DevMateAgent:
             logger.info("DevMateAgent 初始化完成")
 
 
-    async def _init_agent(self) -> None:
+    async def _init_langchain_agent(self) -> None:
         """初始化 Agent 实例."""
         try:
             tools = self.tool_manager.tools
@@ -104,12 +114,33 @@ class DevMateAgent:
             logger.error(f"Agent 初始化失败: {e}", exc_info=True)
             raise
 
+    async def _init_deepagents_agent(self) -> None:
+        """初始化 Agent 实例."""
+        try:
+            tools = self.tool_manager.tools
+            if tools:
+                self.agent = create_deep_agent(
+                    model=self.llm,
+                    tools=tools,
+                    system_prompt=self._build_system_prompt(),
+                    backend=FilesystemBackend(root_dir=settings.file.work_dir, virtual_mode=True),
+                    skills=[settings.skills.skills_dir],
+                )
+                self._last_tool_count = len(tools)
+                logger.info(f"Agent 创建成功，共加载 {len(tools)} 个工具")
+            else:
+                logger.warning("没有可用的工具")
+        except Exception as e:
+            logger.error(f"Agent 初始化失败: {e}", exc_info=True)
+            raise
+
+
     def _build_system_prompt(self) -> str:
         """构建系统提示词.
 
-        优先从 prompts/test       """
+        优先从 prompts/template/codex.md 加载系统提示词       """
         prompt_manager = get_prompt_manager()
-        test_prompt = prompt_manager.load_prompt("test.txt")
+        test_prompt = prompt_manager.load_prompt("codex.md")
 
         if test_prompt:
             base_prompt = test_prompt
@@ -150,21 +181,38 @@ class DevMateAgent:
             messages.append({"role": "user", "content": enhanced_input})
 
             async for chunk in self.agent.astream({"messages": messages}):
+                extracted = False
+                
                 if isinstance(chunk, dict):
-                    if "output" in chunk:
+                    if "output" in chunk and chunk["output"]:
                         yield chunk["output"]
+                        extracted = True
                     elif "messages" in chunk and chunk["messages"]:
-                        last_msg = chunk["messages"][-1]
-                        if hasattr(last_msg, "content"):
-                            yield last_msg.content
+                        for msg in chunk["messages"]:
+                            if hasattr(msg, "content") and msg.content:
+                                yield msg.content
+                                extracted = True
                     elif "model" in chunk:
                         model_data = chunk["model"]
                         if isinstance(model_data, dict) and "messages" in model_data and model_data["messages"]:
-                            last_msg = model_data["messages"][-1]
-                            if hasattr(last_msg, "content"):
-                                yield last_msg.content
-                elif hasattr(chunk, "content"):
+                            for msg in model_data["messages"]:
+                                if hasattr(msg, "content") and msg.content:
+                                    yield msg.content
+                                    extracted = True
+                    elif "tools" in chunk:
+                        yield "\n[工具调用中...]\n"
+                        extracted = True
+                elif hasattr(chunk, "content") and chunk.content:
                     yield chunk.content
+                    extracted = True
+                
+                if not extracted:
+                    try:
+                        chunk_str = str(chunk)
+                        if chunk_str and chunk_str != "{}" and len(chunk_str.strip()) > 0:
+                            yield chunk_str
+                    except Exception:
+                        pass
 
             logger.info("Agent 流式调用成功")
         except Exception as e:
