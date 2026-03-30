@@ -5,6 +5,7 @@ description = "AI 驱动的编程助手 - DevMate"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "deepagents>=0.4.12",
     "faiss-cpu>=1.13.2",
     "fastapi>=0.135.2",
     "httpx>=0.28.1",
