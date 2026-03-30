@@ -14,6 +14,7 @@ services:
     volumes:
       - ..:/app
       - venv:/app/.venv
+      - ../config.toml:/app/config.toml
     ports:
       - "8000:8000"
     command: ["uv", "run", "python", "-m", "src.mcp_server.server"]
@@ -29,6 +30,7 @@ services:
       - venv:/app/.venv
       - ../workspace:/app/workspace
       - ../.knowledge:/app/.knowledge
+      - ../config.toml:/app/config.toml
     stdin_open: true
     tty: true
     command: ["uv", "run", "devmate", "chat"]
@@ -44,6 +46,7 @@ services:
       - venv:/app/.venv
       - ../workspace:/app/workspace
       - ../.knowledge:/app/.knowledge
+      - ../config.toml:/app/config.toml
     ports:
       - "5003:5003"
     command: ["uv", "run", "devmate", "serve"]

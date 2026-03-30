@@ -54,7 +54,7 @@ class ToolManagement:
             if self._initialized:
                 return
             self._load_rag_tools()
-            self._load_file_tools()
+            #self._load_file_tools()
             self._update_tools_list()
             self._initialized = True
             logger.info("ToolManagement 初始化完成")
