@@ -43,7 +43,7 @@ class SkillManager:
         Returns:
             技能列表
         """
-        skills_dir = Path(settings.project_root) / settings.fill.work_dir / settings.skills.skills_dir
+        skills_dir = Path(settings.project_root) / settings.file.work_dir / settings.skills.skills_dir
 
         if not skills_dir.exists() or not skills_dir.is_dir():
             logger.warning("Skills directory does not exist: %s", skills_dir)
