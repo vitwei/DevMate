@@ -60,11 +60,11 @@ class RAGConfig:
     vector_store_path: str = ".knowledge/vector_db"
     chunk_size: int = 1000
     chunk_overlap: int = 200
-    top_k: int = 3
+    top_k: int = 30
     kb_dir: str = ".knowledge/docs"
     embedding_base_url: str = ""
     embedding_api_key: str = ""
-    score_threshold: float = 0.7
+    score_threshold: float = 0.3
 
 
 @dataclass
