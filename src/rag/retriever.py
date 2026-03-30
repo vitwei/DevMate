@@ -80,10 +80,9 @@ class LocalRAGRetriever:
             - 具体内容
         """
         docs = self.vectorstore.similarity_search_with_score(query, k=k)
-
         results: list[dict] = []
         for idx, (doc, score) in enumerate(docs):
-            if score > score_threshold:
+            if score < score_threshold:
                 continue
 
             results.append(
