@@ -272,6 +272,8 @@
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const welcomeMessage = document.getElementById('welcome-message');
+        let currentAssistantMessage = null;
+        let currentAssistantContent = null;
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -305,6 +307,33 @@
                 } else {
                     wrapper.style.display = 'none';
                 }
+            } else if (data.type === 'stream_start') {
+                if (welcomeMessage) {
+                    welcomeMessage.remove();
+                }
+                currentAssistantMessage = document.createElement('div');
+                currentAssistantMessage.className = 'message assistant';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = 'D';
+                
+                currentAssistantContent = document.createElement('div');
+                currentAssistantContent.className = 'message-content';
+                currentAssistantContent.textContent = '';
+                
+                currentAssistantMessage.appendChild(avatar);
+                currentAssistantMessage.appendChild(currentAssistantContent);
+                chatContainer.appendChild(currentAssistantMessage);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } else if (data.type === 'stream_chunk') {
+                if (currentAssistantContent) {
+                    currentAssistantContent.textContent += data.content;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            } else if (data.type === 'stream_end') {
+                currentAssistantMessage = null;
+                currentAssistantContent = null;
             } else if (data.type === 'message') {
                 addMessage(data.role, data.content);
             }

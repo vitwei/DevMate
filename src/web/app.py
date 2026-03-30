@@ -95,23 +95,31 @@ async def websocket_chat(websocket: WebSocket) -> None:
                 "status": True,
             })
 
-            response_parts = []
+            full_response = ""
+            
+            await websocket.send_json({
+                "type": "stream_start",
+            })
+
             async for part in agent.astream(user_message, chat_history):
-                response_parts.append(part)
-            response = "".join(response_parts)
+                if part:
+                    full_response += part
+                    await websocket.send_json({
+                        "type": "stream_chunk",
+                        "content": part,
+                    })
+
+            await websocket.send_json({
+                "type": "stream_end",
+                "content": full_response,
+            })
 
             chat_history.append(("human", user_message))
-            chat_history.append(("ai", response))
+            chat_history.append(("ai", full_response))
 
             await websocket.send_json({
                 "type": "typing",
                 "status": False,
-            })
-
-            await websocket.send_json({
-                "type": "message",
-                "role": "assistant",
-                "content": response,
             })
 
     except WebSocketDisconnect:
