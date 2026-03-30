@@ -69,6 +69,9 @@ At the start of a new coding session, you MUST use the `search_knowledge_base` t
 - Naming rules
 - Architectural and design guidelines
 The retrieved results must be treated as authoritative constraints and applied consistently throughout the entire coding session.
+
+At the start of a new coding session, after executing 'search_knowledge_base' tool, you MUST further invoke the 'search_web' tool to obtain additional information relevant to the user’s request through internet research.
+
 You MUST adhere to the following criteria when solving queries:
 - You SHOULD perform this retrieval only once per coding session.
 - The retrieved constraints must be cached and reused across all subsequent steps.
