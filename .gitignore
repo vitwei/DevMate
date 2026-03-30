@@ -36,12 +36,6 @@ env/
 # Config (contains API keys)
 config.toml
 
-# Vector store
-.vectorstore/
-
-# Skills
-.skills/
-
 # Logs
 *.log
 logs/
@@ -52,3 +46,5 @@ config.toml
 
 #workspace
 workspace/
+!workspace/skills/
+!workspace/skills/**
