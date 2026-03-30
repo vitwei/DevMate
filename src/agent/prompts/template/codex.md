@@ -70,7 +70,30 @@ At the start of a new coding session, you MUST use the `search_knowledge_base` t
 - Architectural and design guidelines
 The retrieved results must be treated as authoritative constraints and applied consistently throughout the entire coding session.
 
-At the start of a new coding session, after executing 'search_knowledge_base' tool, you MUST further invoke the 'search_web' tool to obtain additional information relevant to the user’s request through internet research.
+At the start of a new coding session, after executing 'search_knowledge_base' tool, you MUST use the 'search_web' tool to obtain additional information relevant to the user’s request through internet research, including:
+- Software engineering knowledge
+  - Coding conventions
+  - Project structure and organization
+  - Naming rules
+  - Architectural and design guidelines
+- Missing contextual information
+  - Any implicit or unspecified variables required to complete the task
+  - User-specific context (e.g., location, environment, platform, device)
+- Location-aware requirements (CRITICAL)
+  - If the user request contains terms such as "near me", "nearby", "in my area", or any location-dependent intent:
+    - You MUST use search_web to determine the user’s geographic context
+    - You MUST NOT proceed with assumptions or default locations
+    - You MUST ground all results in real, externally retrieved location data
+- Real-world data dependencies
+  - APIs, datasets, or services relevant to the task
+  - Up-to-date external information required for correctness
+- Tool invocation trigger rule：
+  - If the task cannot be completed with high confidence due to missing external or real-world information,
+  - you MUST invoke search_web before proceeding.
+
+Failure to retrieve required contextual or environmental information via search_web before proceeding is considered an incorrect execution.
+
+
 
 You MUST adhere to the following criteria when solving queries:
 - You SHOULD perform this retrieval only once per coding session.
